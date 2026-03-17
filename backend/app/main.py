@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database.connection import engine
 from app.database.models import Base
-from app.routes import chat, doubts, health, reports, syllabus, webhooks
+from app.routes import chat, doubts, health, reports, syllabus, webhooks, users
 
 # Auto-create all tables on startup
 Base.metadata.create_all(bind=engine)
@@ -30,3 +30,4 @@ app.include_router(doubts.router, prefix=PREFIX)
 app.include_router(reports.router, prefix=PREFIX)
 app.include_router(syllabus.router, prefix=PREFIX)
 app.include_router(webhooks.router, prefix=PREFIX)
+app.include_router(users.router, prefix=PREFIX)
