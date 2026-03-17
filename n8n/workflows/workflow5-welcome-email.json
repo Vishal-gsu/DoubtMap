@@ -1,0 +1,202 @@
+{
+  "name": "Welcome Email on Sign-up",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "new-user",
+        "options": {}
+      },
+      "name": "Webhook - New User from Clerk",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [250, 300],
+      "webhookId": "new-user-webhook",
+      "id": "webhook-new-user"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract user data from Clerk webhook payload\nconst payload = $input.all()[0].json;\n\n// Clerk sends nested data structure\nconst userData = payload.data || payload;\nconst email = userData.email_addresses?.[0]?.email_address || userData.email || 'user@example.com';\nconst firstName = userData.first_name || 'there';\nconst role = userData.public_metadata?.role || userData.role || 'student';\n\nreturn [{\n  json: {\n    email: email,\n    firstName: firstName,\n    role: role\n  }\n}];"
+      },
+      "name": "Code - Extract User Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300],
+      "id": "code-extract-user"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.role}}",
+              "operation": "equals",
+              "value2": "student"
+            }
+          ]
+        }
+      },
+      "name": "IF - Is Student?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [650, 300],
+      "id": "if-is-student"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build student welcome email\nconst firstName = $input.all()[0].json.firstName || 'there';\n\nlet html = '<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;\">';\nhtml += '<div style=\"background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px; text-align: center; border-radius: 10px 10px 0 0;\">';\nhtml += '<h1 style=\"margin: 0; font-size: 32px;\">🎓 Welcome to DoubtMap!</h1>';\nhtml += '</div>';\n\nhtml += '<div style=\"background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;\">';\nhtml += `<h2 style=\"color: #333; margin-top: 0;\">Hi ${firstName}!</h2>`;\nhtml += '<p style=\"font-size: 16px; color: #666;\">Welcome to DoubtMap — your AI study buddy that <strong>actually teaches</strong>.</p>';\n\nhtml += '<div style=\"background: white; padding: 20px; border-radius: 8px; margin: 20px 0;\">';\nhtml += '<h3 style=\"color: #667eea; margin-top: 0;\">Here\\'s what you can do:</h3>';\nhtml += '<ul style=\"color: #333; line-height: 1.8;\">';\nhtml += '<li>✅ <strong>Ask doubts</strong> and get Socratic explanations (not just answers!)</li>';\nhtml += '<li>✅ <strong>Track your progress</strong> with weekly AI-generated learning reports</li>';\nhtml += '<li>✅ <strong>See what classmates are asking</strong> with our campus-wide heatmap</li>';\nhtml += '<li>✅ <strong>Learn from verified sources</strong> — all answers include syllabus references</li>';\nhtml += '</ul>';\nhtml += '</div>';\n\nhtml += '<div style=\"text-align: center; margin: 30px 0;\">';\nhtml += `<a href=\"${$env.FRONTEND_URL}/student/chat\" style=\"display: inline-block; background: #667eea; color: white; padding: 15px 40px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;\">Start Asking Doubts →</a>`;\nhtml += '</div>';\n\nhtml += '<div style=\"background: #e3f2fd; padding: 15px; border-radius: 8px; margin-top: 20px;\">';\nhtml += '<p style=\"margin: 0; color: #1565c0; font-size: 14px;\">💡 <strong>Pro Tip:</strong> Toggle Socratic Mode ON to get guided learning instead of direct answers!</p>';\nhtml += '</div>';\n\nhtml += '<p style=\"color: #666; font-size: 14px; margin-top: 30px; text-align: center;\">Happy learning! 🚀</p>';\nhtml += '</div>';\n\nhtml += '<div style=\"text-align: center; margin-top: 20px; color: #999; font-size: 12px;\">';\nhtml += '<p>~ The DoubtMap Team</p>';\nhtml += '</div>';\nhtml += '</div>';\n\nreturn [{ json: { emailBody: html } }];"
+      },
+      "name": "Code - Build Student Welcome Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 200],
+      "id": "code-student-email"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build professor welcome email\nconst firstName = $input.all()[0].json.firstName || 'Professor';\n\nlet html = '<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;\">';\nhtml += '<div style=\"background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 40px; text-align: center; border-radius: 10px 10px 0 0;\">';\nhtml += '<h1 style=\"margin: 0; font-size: 32px;\">👨‍🏫 Welcome to DoubtMap, Professor!</h1>';\nhtml += '</div>';\n\nhtml += '<div style=\"background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;\">';\nhtml += `<h2 style=\"color: #333; margin-top: 0;\">Hi ${firstName}!</h2>`;\nhtml += '<p style=\"font-size: 16px; color: #666;\">Welcome to DoubtMap — helping you understand student confusion <strong>before exams</strong>.</p>';\n\nhtml += '<div style=\"background: white; padding: 20px; border-radius: 8px; margin: 20px 0;\">';\nhtml += '<h3 style=\"color: #f5576c; margin-top: 0;\">Here\\'s what you can do:</h3>';\nhtml += '<ul style=\"color: #333; line-height: 1.8;\">';\nhtml += '<li>✅ <strong>Monitor campus-wide doubt heatmaps</strong> — see which topics confuse most students</li>';\nhtml += '<li>✅ <strong>Respond to escalated doubts</strong> when AI confidence is low</li>';\nhtml += '<li>✅ <strong>Upload syllabus</strong> to improve AI accuracy and grounding</li>';\nhtml += '<li>✅ <strong>Get automatic alerts</strong> when students are struggling</li>';\nhtml += '</ul>';\nhtml += '</div>';\n\nhtml += '<div style=\"text-align: center; margin: 30px 0;\">';\nhtml += `<a href=\"${$env.FRONTEND_URL}/professor/dashboard\" style=\"display: inline-block; background: #f5576c; color: white; padding: 15px 40px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;\">Go to Dashboard →</a>`;\nhtml += '</div>';\n\nhtml += '<div style=\"background: #fff3e0; padding: 15px; border-radius: 8px; margin-top: 20px;\">';\nhtml += '<p style=\"margin: 0; color: #e65100; font-size: 14px;\">💡 <strong>Pro Tip:</strong> Upload your syllabus first to train the AI on your course material!</p>';\nhtml += '</div>';\n\nhtml += '<p style=\"color: #666; font-size: 14px; margin-top: 30px; text-align: center;\">Together, we\\'ll help students learn better! 🎯</p>';\nhtml += '</div>';\n\nhtml += '<div style=\"text-align: center; margin-top: 20px; color: #999; font-size: 12px;\">';\nhtml += '<p>~ The DoubtMap Team</p>';\nhtml += '</div>';\nhtml += '</div>';\n\nreturn [{ json: { emailBody: html } }];"
+      },
+      "name": "Code - Build Professor Welcome Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 400],
+      "id": "code-professor-email"
+    },
+    {
+      "parameters": {
+        "fromEmail": "doubtmap@notifications.com",
+        "toEmail": "={{$('Code - Extract User Data').item.json.email}}",
+        "subject": "Welcome to DoubtMap! 🎓",
+        "emailFormat": "html",
+        "html": "={{$json.emailBody}}",
+        "options": {}
+      },
+      "name": "Send Email - Student Welcome",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1050, 200],
+      "id": "email-student-welcome"
+    },
+    {
+      "parameters": {
+        "fromEmail": "doubtmap@notifications.com",
+        "toEmail": "={{$('Code - Extract User Data').item.json.email}}",
+        "subject": "Welcome to DoubtMap, Professor! 👨‍🏫",
+        "emailFormat": "html",
+        "html": "={{$json.emailBody}}",
+        "options": {}
+      },
+      "name": "Send Email - Professor Welcome",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1050, 400],
+      "id": "email-professor-welcome"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"status\": \"success\", \"message\": \"Welcome email sent\"}",
+        "options": {}
+      },
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1250, 300],
+      "id": "webhook-response"
+    }
+  ],
+  "connections": {
+    "Webhook - New User from Clerk": {
+      "main": [
+        [
+          {
+            "node": "Code - Extract User Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Extract User Data": {
+      "main": [
+        [
+          {
+            "node": "IF - Is Student?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Is Student?": {
+      "main": [
+        [
+          {
+            "node": "Code - Build Student Welcome Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code - Build Professor Welcome Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Build Student Welcome Email": {
+      "main": [
+        [
+          {
+            "node": "Send Email - Student Welcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Build Professor Welcome Email": {
+      "main": [
+        [
+          {
+            "node": "Send Email - Professor Welcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email - Student Welcome": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email - Professor Welcome": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2026-03-17T00:00:00.000Z",
+  "versionId": "1"
+}

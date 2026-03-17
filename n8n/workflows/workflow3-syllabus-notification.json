@@ -1,0 +1,105 @@
+{
+  "name": "Syllabus Upload Notification",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "syllabus-uploaded",
+        "authentication": "headerAuth",
+        "options": {}
+      },
+      "name": "Webhook - Syllabus Uploaded",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [250, 300],
+      "webhookId": "syllabus-uploaded-webhook",
+      "id": "webhook-syllabus",
+      "credentials": {
+        "headerAuth": {
+          "id": "n8n-backend-auth",
+          "name": "n8n-backend-auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract data from webhook payload\nconst payload = $input.all()[0].json;\n\nconst subject = payload.subject || 'New Subject';\nconst filename = payload.filename || 'syllabus.pdf';\nconst professorName = payload.professor_name || 'Your Professor';\n\n// Build email HTML\nlet html = '<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;\">';\nhtml += '<div style=\"background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;\">';\nhtml += '<h1 style=\"margin: 0;\">📚 New Study Material Available!</h1>';\nhtml += '</div>';\n\nhtml += '<div style=\"background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;\">';\nhtml += `<h2 style=\"color: #333; margin-top: 0;\">New Syllabus: ${subject}</h2>`;\nhtml += `<p style=\"font-size: 16px; color: #666;\">Professor <strong>${professorName}</strong> has uploaded the syllabus for <strong>${subject}</strong>.</p>`;\n\nhtml += '<div style=\"background: white; padding: 20px; border-left: 4px solid #667eea; margin: 20px 0; border-radius: 5px;\">';\nhtml += '<p style=\"margin: 0; color: #333;\">📄 <strong>File:</strong> ' + filename + '</p>';\nhtml += '</div>';\n\nhtml += '<p style=\"color: #333;\">You can now ask AI doubts about this subject!</p>';\n\nhtml += '<div style=\"text-align: center; margin: 30px 0;\">';\nhtml += `<a href=\"${$env.FRONTEND_URL}/student/chat\" style=\"display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;\">Start Asking Doubts →</a>`;\nhtml += '</div>';\n\nhtml += '<p style=\"color: #666; font-size: 14px;\">The AI is now trained on this material and ready to help you learn!</p>';\nhtml += '</div>';\n\nhtml += '<div style=\"text-align: center; margin-top: 20px; color: #999; font-size: 12px;\">';\nhtml += '<p>~ The DoubtMap Team</p>';\nhtml += '</div>';\nhtml += '</div>';\n\nreturn [{\n  json: {\n    emailBody: html,\n    subject: subject,\n    professor_name: professorName,\n    student_emails: 'students@example.com' // TODO: Get from backend or environment\n  }\n}];"
+      },
+      "name": "Code - Format Notification",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300],
+      "id": "code-format-notification"
+    },
+    {
+      "parameters": {
+        "fromEmail": "doubtmap@notifications.com",
+        "toEmail": "={{$json.student_emails}}",
+        "subject": "New Syllabus Available: {{$json.subject}}",
+        "emailFormat": "html",
+        "html": "={{$json.emailBody}}",
+        "options": {}
+      },
+      "name": "Send Email - Notify Students",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [650, 300],
+      "id": "email-send-notification"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"status\": \"success\", \"message\": \"Notification sent to students\"}",
+        "options": {}
+      },
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [850, 300],
+      "id": "webhook-response"
+    }
+  ],
+  "connections": {
+    "Webhook - Syllabus Uploaded": {
+      "main": [
+        [
+          {
+            "node": "Code - Format Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Format Notification": {
+      "main": [
+        [
+          {
+            "node": "Send Email - Notify Students",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email - Notify Students": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2026-03-17T00:00:00.000Z",
+  "versionId": "1"
+}

@@ -1,0 +1,154 @@
+{
+  "name": "Doubt Escalation Alert",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "name": "Schedule Trigger - Every 6 Hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [250, 300],
+      "id": "schedule-trigger-escalation"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.BACKEND_URL}}/api/v1/webhooks/n8n/get-escalated",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "headerAuth",
+        "options": {}
+      },
+      "name": "HTTP - Get Escalated Doubts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [450, 300],
+      "id": "http-get-escalated",
+      "credentials": {
+        "headerAuth": {
+          "id": "n8n-backend-auth",
+          "name": "n8n-backend-auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json.escalated_count}}",
+              "operation": "larger",
+              "value2": 0
+            }
+          ]
+        }
+      },
+      "name": "IF - Has Escalated Doubts?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [650, 300],
+      "id": "if-has-escalated"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format escalated doubts into email HTML\nconst data = $input.all()[0].json;\nconst doubts = data.doubts || [];\nconst count = data.escalated_count || 0;\n\nlet html = '<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;\">';\nhtml += '<div style=\"background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;\">';\nhtml += '<h1 style=\"margin: 0;\">🚨 Students Need Help!</h1>';\nhtml += '</div>';\nhtml += '<div style=\"background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;\">';\n\nhtml += `<p style=\"font-size: 16px; color: #333;\"><strong>${count} topics</strong> have low AI confidence and may need your expertise:</p>`;\n\nhtml += '<ul style=\"list-style: none; padding: 0;\">';\n\nfor (const d of doubts) {\n  const confidence = (d.confidence * 100).toFixed(0);\n  const emoji = d.confidence < 0.6 ? '🔴' : d.confidence < 0.7 ? '🟡' : '🟠';\n  \n  html += '<li style=\"background: white; margin: 10px 0; padding: 15px; border-left: 4px solid #f5576c; border-radius: 5px;\">';\n  html += `<strong style=\"color: #f5576c;\">${emoji} ${d.topic || 'Unknown Topic'}</strong><br>`;\n  html += `<span style=\"color: #666; font-size: 14px;\">"${d.message || d.doubt_text || 'No message'}"</span><br>`;\n  html += `<span style=\"color: #999; font-size: 12px;\">Confidence: ${confidence}% | Asked by ${d.user_name || 'Student'}</span>`;\n  html += '</li>';\n}\n\nhtml += '</ul>';\n\nhtml += `<div style=\"text-align: center; margin: 30px 0;\">`;\nhtml += `<a href=\"${$env.FRONTEND_URL}/professor/escalations\" style=\"display: inline-block; background: #f5576c; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;\">Respond on DoubtMap →</a>`;\nhtml += '</div>';\n\nhtml += '<p style=\"color: #666; font-size: 14px;\">Your response will be added to the knowledge base and improve AI accuracy for future students.</p>';\n\nhtml += '</div>';\nhtml += '<div style=\"text-align: center; margin-top: 20px; color: #999; font-size: 12px;\">';\nhtml += '<p>~ The DoubtMap Team</p>';\nhtml += '</div>';\nhtml += '</div>';\n\nreturn [{\n  json: {\n    emailBody: html,\n    count: count,\n    professor_email: 'professor@example.com' // TODO: Get from backend or environment\n  }\n}];"
+      },
+      "name": "Code - Format Email HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 200],
+      "id": "code-format-email"
+    },
+    {
+      "parameters": {
+        "fromEmail": "doubtmap@notifications.com",
+        "toEmail": "={{$json.professor_email}}",
+        "subject": "DoubtMap Alert: {{$('HTTP - Get Escalated Doubts').item.json.escalated_count}} topics need your attention",
+        "emailFormat": "html",
+        "html": "={{$json.emailBody}}",
+        "options": {}
+      },
+      "name": "Send Email - Alert Professor",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1050, 200],
+      "id": "email-send-alert"
+    },
+    {
+      "parameters": {},
+      "name": "No Escalations - Stop",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [850, 400],
+      "id": "noop-stop"
+    }
+  ],
+  "connections": {
+    "Schedule Trigger - Every 6 Hours": {
+      "main": [
+        [
+          {
+            "node": "HTTP - Get Escalated Doubts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - Get Escalated Doubts": {
+      "main": [
+        [
+          {
+            "node": "IF - Has Escalated Doubts?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Has Escalated Doubts?": {
+      "main": [
+        [
+          {
+            "node": "Code - Format Email HTML",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Escalations - Stop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Format Email HTML": {
+      "main": [
+        [
+          {
+            "node": "Send Email - Alert Professor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2026-03-17T00:00:00.000Z",
+  "versionId": "1"
+}
