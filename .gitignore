@@ -13,6 +13,7 @@ backend/.env
 
 # n8n
 n8n/credentials/
+n8n-team-share.txt
 
 # General
 .DS_Store

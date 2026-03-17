@@ -1,0 +1,112 @@
+{
+  "name": "Daily Doubt Digest",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 20 * * *"
+            }
+          ]
+        }
+      },
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "id": "schedule-trigger-daily"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://localhost:8000/api/v1/doubts/heatmap",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "headerAuth",
+        "options": {}
+      },
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [450, 300],
+      "id": "http-get-heatmap",
+      "credentials": {
+        "headerAuth": {
+          "id": "n8n-backend-auth",
+          "name": "n8n-backend-auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format top 5 topics into daily digest email\nconst data = $input.all()[0].json;\nconst topics = (data.topics || []).slice(0, 5);\n\n// Build email HTML\nlet html = '<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;\">';\nhtml += '<div style=\"background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;\">';\nhtml += '<h1 style=\"margin: 0;\">📊 Today on DoubtMap</h1>';\nhtml += '</div>';\n\nhtml += '<div style=\"background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;\">';\nhtml += '<p style=\"font-size: 16px; color: #333;\">Here are the <strong>hottest topics</strong> your classmates are asking about:</p>';\n\nhtml += '<ol style=\"padding-left: 20px;\">';\n\nfor (const t of topics) {\n  const confidence = t.avg_confidence || t.confidence || 0;\n  const emoji = confidence < 0.6 ? '🔴' : confidence < 0.8 ? '🟡' : '🟢';\n  const confidencePercent = (confidence * 100).toFixed(0);\n  \n  html += '<li style=\"margin: 15px 0; padding: 15px; background: white; border-radius: 8px; border-left: 4px solid #11998e;\">';\n  html += `<strong style=\"color: #11998e; font-size: 18px;\">${emoji} ${t.topic || 'Unknown Topic'}</strong><br>`;\n  html += `<span style=\"color: #666; font-size: 14px;\">${t.count || 0} doubts asked</span>`;\n  html += ` | <span style=\"color: #666; font-size: 14px;\">Avg confidence: ${confidencePercent}%</span>`;\n  html += '</li>';\n}\n\nhtml += '</ol>';\n\nhtml += '<div style=\"background: #e8f5e9; padding: 15px; border-radius: 8px; margin: 20px 0;\">';\nhtml += '<p style=\"margin: 0; color: #2e7d32; font-size: 14px;\">💡 <strong>Legend:</strong> 🟢 High confidence | 🟡 Medium confidence | 🔴 Needs professor help</p>';\nhtml += '</div>';\n\nhtml += '<div style=\"text-align: center; margin: 30px 0;\">';\nhtml += '<a href=\"http://localhost:3000/student/chat\" style=\"display: inline-block; background: #11998e; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;\">Ask Your Own Doubts →</a>';\nhtml += '</div>';\n\nhtml += '<p style=\"color: #666; font-size: 14px; text-align: center;\">Stay curious and keep learning! 🚀</p>';\nhtml += '</div>';\n\nhtml += '<div style=\"text-align: center; margin-top: 20px; color: #999; font-size: 12px;\">';\nhtml += '<p>~ The DoubtMap Team</p>';\nhtml += '<p>You are receiving this daily digest because you are an active DoubtMap user.</p>';\nhtml += '</div>';\nhtml += '</div>';\n\nreturn [{\n  json: {\n    emailBody: html,\n    topicCount: topics.length,\n    student_emails: 'students@example.com'\n  }\n}];"
+      },
+      "name": "Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300],
+      "id": "code-format-digest"
+    },
+    {
+      "parameters": {
+        "fromEmail": "doubtmap@notifications.com",
+        "toEmail": "={{$json.student_emails}}",
+        "subject": "📊 Today on DoubtMap: Top {{$json.topicCount}} Topics",
+        "message": "={{$json.emailBody}}",
+        "options": {
+          "allowUnauthorizedCerts": false,
+          "html": true
+        }
+      },
+      "name": "Send Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [850, 300],
+      "id": "email-send-digest"
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2026-03-17T00:00:00.000Z",
+  "versionId": "1"
+}
