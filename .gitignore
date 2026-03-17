@@ -3,6 +3,7 @@ frontend/node_modules/
 frontend/.next/
 frontend/.env.local
 frontend/.env
+frontend/.env.*
 
 # Backend
 backend/venv/
@@ -10,6 +11,7 @@ backend/__pycache__/
 backend/**/__pycache__/
 backend/**/*.pyc
 backend/.env
+backend/.env.*
 
 # n8n
 n8n/credentials/
@@ -19,6 +21,19 @@ n8n-team-share.txt
 .DS_Store
 *.log
 .env
+.env.*
+*.env
+!.env.example
+!backend/.env.example
+*.secret
+*.secrets
+secrets/
+credentials/
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
 Thumbs.db
 .vscode/
 *.pyc

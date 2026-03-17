@@ -250,7 +250,7 @@ def notify_syllabus_upload(subject: str, filename: str, professor_name: str):
 
 ```env
 # n8n Integration
-N8N_WEBHOOK_SECRET=7af8b2e4c9d1a6f3e5b8c2d9a4f7e1b3c8d5a2f9e6b3c1d8a5f2e9b6c3d1a8f5
+N8N_WEBHOOK_SECRET=EXAMPLE_N8N_WEBHOOK_SECRET_HEX
 N8N_SYLLABUS_WEBHOOK_URL=https://your-instance.app.n8n.cloud/webhook/syllabus-uploaded
 
 # Other backend env vars...
@@ -285,7 +285,7 @@ All backend ↔ n8n communication uses **Header-based authentication**:
 **How to generate secret:**
 ```bash
 openssl rand -hex 32
-# Example: 7af8b2e4c9d1a6f3e5b8c2d9a4f7e1b3c8d5a2f9e6b3c1d8a5f2e9b6c3d1a8f5
+# Example: EXAMPLE_N8N_WEBHOOK_SECRET_HEX
 ```
 
 **Backend verification (Python):**

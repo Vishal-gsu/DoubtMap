@@ -157,7 +157,7 @@ docker exec -it n8n n8n import:workflow --input=/workflows/workflow5-welcome-ema
    - Type: Header Auth
    - Name: n8n-backend-auth
    - Header Name: x-n8n-secret
-   - Value: `308a361239771d72622f920985a66c5d3e1887f9d7462a6d320e89f048478d78`
+   - Value: `YOUR_GENERATED_N8N_WEBHOOK_SECRET`
 
 2. **Update HTTP Request nodes:**
    - For local backend: `http://localhost:8000/api/v1/...`

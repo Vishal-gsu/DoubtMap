@@ -122,7 +122,7 @@ http://localhost:8000/api/v1/doubts/recent?limit=1000
 ```
 Credential Name: n8n-backend-auth
 Name: x-n8n-secret
-Value: 308a361239771d72622f920985a66c5d3e1887f9d7462a6d320e89f048478d78
+Value: YOUR_GENERATED_N8N_WEBHOOK_SECRET
 ```
 
 8. Click **"Save"** (on the credential popup)

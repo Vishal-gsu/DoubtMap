@@ -62,7 +62,7 @@ You only need ONE credential for all workflows!
    ```
    Credential name: n8n-backend-auth
    Name: x-n8n-secret
-   Value: 308a361239771d72622f920985a66c5d3e1887f9d7462a6d320e89f048478d78
+   Value: YOUR_GENERATED_N8N_WEBHOOK_SECRET
    ```
 6. Click **"Save"**
 
@@ -112,7 +112,7 @@ Create a message and send to your team RIGHT NOW:
 
 🔐 FOR LAPTOP 2 (BACKEND) - ADD TO YOUR .env FILE:
 
-N8N_WEBHOOK_SECRET=308a361239771d72622f920985a66c5d3e1887f9d7462a6d320e89f048478d78
+N8N_WEBHOOK_SECRET=YOUR_GENERATED_N8N_WEBHOOK_SECRET
 
 ═══════════════════════════════════════════════════════
 
@@ -127,7 +127,7 @@ N8N_WEBHOOK_SECRET=308a361239771d72622f920985a66c5d3e1887f9d7462a6d320e89f048478
 Example call:
 curl -X POST "YOUR_WEBHOOK_URL" \
   -H "Content-Type: application/json" \
-  -H "x-n8n-secret: 308a361239771d72622f920985a66c5d3e1887f9d7462a6d320e89f048478d78" \
+  -H "x-n8n-secret: YOUR_GENERATED_N8N_WEBHOOK_SECRET" \
   -d '{"subject":"Test","filename":"test.pdf","professor_name":"Dr. Test"}'
 
 ═══════════════════════════════════════════════════════
@@ -227,7 +227,7 @@ Clerk webhook URL (for new users):
 **"Credential creation confusing"**
 → Just make sure these 3 things:
   - Name field: `x-n8n-secret`
-  - Value field: `308a361239771d72622f920985a66c5d3e1887f9d7462a6d320e89f048478d78`
+  - Value field: `YOUR_GENERATED_N8N_WEBHOOK_SECRET`
   - Save it!
 
 ---
