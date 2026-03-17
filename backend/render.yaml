@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: doubtmap-api
+    runtime: docker
+    rootDir: backend
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: doubtmap-db
+          property: connectionString
+      - key: GROQ_API_KEY
+        sync: false
+      - key: PINECONE_API_KEY
+        sync: false
+      - key: PINECONE_INDEX_NAME
+        value: doubtmap-syllabus
+      - key: CORS_ORIGINS
+        value: https://doubtmap.vercel.app,http://localhost:3000
+      - key: N8N_WEBHOOK_SECRET
+        sync: false
+      - key: APP_ENV
+        value: production
+
+databases:
+  - name: doubtmap-db
+    plan: free
+    databaseName: doubtmap
