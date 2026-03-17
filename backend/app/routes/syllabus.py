@@ -4,11 +4,12 @@ from sqlalchemy.orm import Session
 from app.database.connection import SessionLocal, get_db
 from app.database.models import Syllabus
 from app.services.rag_service import process_syllabus_pdf
+from app.services.n8n_service import notify_syllabus_uploaded
 
 router = APIRouter(prefix="/syllabus", tags=["syllabus"])
 
 
-def _index_syllabus_background(file_bytes: bytes, subject: str, syllabus_id: str):
+def _index_syllabus_background(file_bytes: bytes, subject: str, syllabus_id: str, professor_id: str, filename: str):
     """
     Runs in background — creates its own DB session
     so the request session is not shared across threads.
@@ -21,6 +22,8 @@ def _index_syllabus_background(file_bytes: bytes, subject: str, syllabus_id: str
             syllabus.status = "indexed"
             syllabus.chunk_count = chunk_count
             db.commit()
+        # Notify n8n Workflow 3 after successful indexing
+        notify_syllabus_uploaded(subject, filename, chunk_count, professor_id)
     except Exception as exc:
         syllabus = db.query(Syllabus).filter(Syllabus.id == syllabus_id).first()
         if syllabus:
@@ -57,6 +60,8 @@ async def upload_syllabus(
         file_bytes,
         subject,
         str(syllabus.id),
+        professor_id,
+        file.filename,
     )
 
     return {

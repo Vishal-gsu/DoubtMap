@@ -1,6 +1,5 @@
 from sqlalchemy import Column, String, Integer, Float, Text, DateTime, Boolean
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship, declarative_base
+from sqlalchemy.orm import declarative_base
 from datetime import datetime
 import uuid
 
@@ -10,7 +9,7 @@ Base = declarative_base()
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     clerk_id = Column(String, unique=True, nullable=False, index=True)
     email = Column(String, nullable=False)
     name = Column(String, nullable=False)
@@ -21,7 +20,7 @@ class User(Base):
 class Doubt(Base):
     __tablename__ = "doubts"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     user_id = Column(String, nullable=False, index=True)       # clerk_id
     message = Column(Text, nullable=False)                      # student's question
     response = Column(Text, nullable=False)                     # AI's answer
@@ -38,7 +37,7 @@ class Doubt(Base):
 class Report(Base):
     __tablename__ = "reports"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     user_id = Column(String, nullable=False, index=True)       # clerk_id
     week_start = Column(DateTime, nullable=False)
     week_end = Column(DateTime, nullable=False)
@@ -54,7 +53,7 @@ class Report(Base):
 class Syllabus(Base):
     __tablename__ = "syllabi"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     subject = Column(String, nullable=False)
     filename = Column(String, nullable=False)
     professor_id = Column(String, nullable=False)               # clerk_id
