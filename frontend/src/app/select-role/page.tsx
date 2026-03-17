@@ -15,6 +15,18 @@ export default function SelectRolePage() {
   const selectRole = async (role: 'student' | 'professor') => {
     setLoading(true);
     await user?.update({ unsafeMetadata: { role } });
+
+    // Register user in backend DB with chosen role
+    try {
+      const email = user?.primaryEmailAddress?.emailAddress ?? '';
+      const name = user?.fullName ?? user?.firstName ?? email;
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clerk_id: user?.id, name, email, role }),
+      });
+    } catch { /* fire-and-forget */ }
+
     router.push(role === 'student' ? '/student/chat' : '/professor/dashboard');
   };
 
