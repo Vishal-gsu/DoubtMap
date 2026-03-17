@@ -1,0 +1,90 @@
+{
+  "name": "Syllabus Upload Notification",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "syllabus-uploaded",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "syllabus-uploaded-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "const payload = $input.all()[0].json;\nconst subject = payload.subject || 'New Subject';\nconst filename = payload.filename || 'syllabus.pdf';\nconst professorName = payload.professor_name || 'Your Professor';\n\nlet html = '<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;\">';\nhtml += '<div style=\"background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;\">';\nhtml += '<h1 style=\"margin: 0;\">📚 New Study Material!</h1>';\nhtml += '</div>';\nhtml += '<div style=\"background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;\">';\nhtml += `<h2 style=\"color: #333;\">New Syllabus: ${subject}</h2>`;\nhtml += `<p>Professor <strong>${professorName}</strong> uploaded: <strong>${filename}</strong></p>`;\nhtml += '<p>You can now ask AI doubts about this subject!</p>';\nhtml += '<p><a href=\"http://localhost:3000/student/chat\">Start Asking Doubts</a></p>';\nhtml += '</div></div>';\n\nreturn [{\n  json: {\n    emailBody: html,\n    subject: subject,\n    student_emails: 'students@example.com'\n  }\n}];"
+      },
+      "name": "Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "doubtmap@notifications.com",
+        "toEmail": "={{$json.student_emails}}",
+        "subject": "New Syllabus: {{$json.subject}}",
+        "message": "={{$json.emailBody}}",
+        "options": {
+          "html": true
+        }
+      },
+      "name": "Send Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"status\": \"success\"}",
+        "options": {}
+      },
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [850, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "staticData": null,
+  "tags": []
+}

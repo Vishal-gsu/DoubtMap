@@ -1,0 +1,191 @@
+{
+  "name": "Welcome Email on Sign-up",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "new-user",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "new-user-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "const payload = $input.all()[0].json;\nconst userData = payload.data || payload;\nconst email = userData.email_addresses?.[0]?.email_address || userData.email || 'user@example.com';\nconst firstName = userData.first_name || 'there';\nconst role = userData.public_metadata?.role || userData.role || 'student';\nreturn [{ json: { email: email, firstName: firstName, role: role }}];"
+      },
+      "name": "Code Extract",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.role}}",
+              "operation": "equals",
+              "value2": "student"
+            }
+          ]
+        }
+      },
+      "name": "IF",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const firstName = $input.all()[0].json.firstName || 'there';\nlet html = '<div style=\"font-family: Arial, sans-serif;\"><h1>🎓 Welcome to DoubtMap!</h1>';\nhtml += `<h2>Hi ${firstName}!</h2><p>Welcome to DoubtMap — your AI study buddy.</p>`;\nhtml += '<p>✅ Ask doubts and get Socratic explanations</p>';\nhtml += '<p>✅ Track your weekly learning reports</p>';\nhtml += '<p><a href=\"http://localhost:3000/student/chat\">Start Asking Doubts</a></p></div>';\nreturn [{ json: { emailBody: html }}];"
+      },
+      "name": "Code Student",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "const firstName = $input.all()[0].json.firstName || 'Professor';\nlet html = '<div style=\"font-family: Arial, sans-serif;\"><h1>👨‍🏫 Welcome Professor!</h1>';\nhtml += `<h2>Hi ${firstName}!</h2><p>Welcome to DoubtMap — understand student confusion before exams.</p>`;\nhtml += '<p>✅ Monitor doubt heatmaps</p>';\nhtml += '<p>✅ Respond to escalated doubts</p>';\nhtml += '<p><a href=\"http://localhost:3000/professor/dashboard\">Go to Dashboard</a></p></div>';\nreturn [{ json: { emailBody: html }}];"
+      },
+      "name": "Code Professor",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 400]
+    },
+    {
+      "parameters": {
+        "fromEmail": "doubtmap@notifications.com",
+        "toEmail": "={{$('Code Extract').item.json.email}}",
+        "subject": "Welcome to DoubtMap! 🎓",
+        "message": "={{$json.emailBody}}",
+        "options": {
+          "html": true
+        }
+      },
+      "name": "Send Email Student",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1050, 200]
+    },
+    {
+      "parameters": {
+        "fromEmail": "doubtmap@notifications.com",
+        "toEmail": "={{$('Code Extract').item.json.email}}",
+        "subject": "Welcome Professor! 👨‍🏫",
+        "message": "={{$json.emailBody}}",
+        "options": {
+          "html": true
+        }
+      },
+      "name": "Send Email Professor",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1050, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"status\": \"success\"}",
+        "options": {}
+      },
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1250, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code Extract",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code Extract": {
+      "main": [
+        [
+          {
+            "node": "IF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF": {
+      "main": [
+        [
+          {
+            "node": "Code Student",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code Professor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code Student": {
+      "main": [
+        [
+          {
+            "node": "Send Email Student",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code Professor": {
+      "main": [
+        [
+          {
+            "node": "Send Email Professor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email Student": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email Professor": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "staticData": null,
+  "tags": []
+}

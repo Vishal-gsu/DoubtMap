@@ -1,0 +1,141 @@
+{
+  "name": "Weekly Report Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 22 * * 0"
+            }
+          ]
+        }
+      },
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://localhost:8000/api/v1/doubts/recent?limit=1000",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "headerAuth",
+        "options": {}
+      },
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [450, 300],
+      "credentials": {
+        "headerAuth": {
+          "id": "n8n-backend-auth",
+          "name": "n8n-backend-auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const doubts = $input.all()[0].json.doubts || [];\nconst uniqueUserIds = [...new Set(doubts.map(d => d.user_id))];\nreturn uniqueUserIds.map(id => ({\n  json: {\n    user_id: id,\n    email: doubts.find(d => d.user_id === id)?.user_email || 'student@example.com',\n    name: doubts.find(d => d.user_id === id)?.user_name || 'Student'\n  }\n}));"
+      },
+      "name": "Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8000/api/v1/webhooks/n8n/generate-report",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "headerAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "user_id",
+              "value": "={{$json.user_id}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "HTTP Request Generate",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [850, 300],
+      "credentials": {
+        "headerAuth": {
+          "id": "n8n-backend-auth",
+          "name": "n8n-backend-auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "doubtmap@notifications.com",
+        "toEmail": "={{$json.email}}",
+        "subject": "Your Weekly DoubtMap Learning Report",
+        "message": "<h2>Hi {{$json.name}}!</h2><p>Your weekly learning report is ready.</p><p><a href=\"http://localhost:3000/student/reports\">View Your Report</a></p><p>Keep learning! 🎯</p>",
+        "options": {
+          "html": true
+        }
+      },
+      "name": "Send Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1050, 300]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request Generate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request Generate": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {},
+  "staticData": null,
+  "tags": []
+}
