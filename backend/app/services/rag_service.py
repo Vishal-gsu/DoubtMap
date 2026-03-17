@@ -7,18 +7,22 @@ def retrieve_context(question: str, subject: str | None, top_k: int = 5) -> list
     1. Embed the question
     2. Search Pinecone for similar syllabus chunks
     3. Return list of {text, source, score}
+    Falls back to empty context if Pinecone is unavailable.
     """
-    question_embedding = get_embedding(question)
-    matches = query_vectors(question_embedding, subject, top_k)
-
-    context = []
-    for match in matches:
-        context.append({
-            "text": match.metadata.get("text", ""),
-            "source": match.metadata.get("source", "Unknown"),
-            "score": match.score,
-        })
-    return context
+    try:
+        question_embedding = get_embedding(question)
+        matches = query_vectors(question_embedding, subject, top_k)
+        context = []
+        for match in matches:
+            context.append({
+                "text": match.metadata.get("text", ""),
+                "source": match.metadata.get("source", "Unknown"),
+                "score": match.score,
+            })
+        return context
+    except Exception as e:
+        print(f"[RAG] Pinecone unavailable, returning empty context: {e}")
+        return []
 
 
 def process_syllabus_pdf(file_bytes: bytes, subject: str, syllabus_id: str) -> int:
