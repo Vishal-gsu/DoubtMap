@@ -1,0 +1,23 @@
+# Frontend
+frontend/node_modules/
+frontend/.next/
+frontend/.env.local
+frontend/.env
+
+# Backend
+backend/venv/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/**/*.pyc
+backend/.env
+
+# n8n
+n8n/credentials/
+
+# General
+.DS_Store
+*.log
+.env
+Thumbs.db
+.vscode/
+*.pyc
